@@ -8,5 +8,11 @@ struct contact;
 
 /* TOUT DOUX: à compléter */
 /* Profitez de cette période sombre pour braver les interdits et rétablir le contact. */
+/* 
+    Implémetation d'une liste chainée simple.
+*/
+struct cell;
+
+struct dir;
 
 #endif /* _CONTACT_H_ */

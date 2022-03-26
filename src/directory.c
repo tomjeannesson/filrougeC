@@ -10,7 +10,8 @@
 */
 struct dir *dir_create(uint32_t len)
 {
-    (void)len;
+    struct dir *table = {len, {0}};
+    // (void)len;
     return NULL;
 }
 
