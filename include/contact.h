@@ -15,4 +15,10 @@ struct cell;
 
 struct dir;
 
+extern char *display_cell(struct cell *head);
+
+extern void display_dir(struct dir *directory); 
+
+
+
 #endif /* _CONTACT_H_ */

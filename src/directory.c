@@ -10,9 +10,10 @@
 */
 struct dir *dir_create(uint32_t len)
 {
-    struct dir *table = {len, {0}};
-    // (void)len;
-    return NULL;
+    // cells = 
+    struct dir *table = {len, {NULL}};
+    display_dir(table);
+    return table;
 }
 
 /*
