@@ -4,21 +4,42 @@
 /*
   Un contact représente une association {nom, numéro}.
 */
-struct contact;
+typedef struct contact
+{
+    const char *name;
+    const char *number;
+} contact_t;
 
-/* TOUT DOUX: à compléter */
-/* Profitez de cette période sombre pour braver les interdits et rétablir le contact. */
-/* 
-    Implémetation d'une liste chainée simple.
-*/
-struct cell;
+extern contact_t *init_contact(const char *name, const char *number);
 
-struct dir;
+typedef struct node
+{
+    contact_t *data;
+    struct node *next;
+} node_t;
 
-extern char *display_cell(struct cell *head);
+extern node_t *init_node(contact_t *contact);
 
-extern void display_dir(struct dir *directory); 
+typedef struct LinkedList
+{
+    int length;
+    node_t *head;
+} list_t;
 
+extern list_t *init_list(node_t *head);
 
+extern void print_list(list_t *list);
+
+extern list_t *append(list_t *list, node_t *node);
+
+typedef struct dir
+{
+    uint32_t length;
+    list_t *table[];
+} dir_t;
+
+extern dir_t *init_dir(int len);
+
+extern void display_dir(struct dir *directory);
 
 #endif /* _CONTACT_H_ */
