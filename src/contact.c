@@ -2,6 +2,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+
+// #include <hash.h>
 
 typedef struct contact
 {
@@ -15,6 +18,11 @@ contact_t *init_contact(const char *name, const char *number)
     temp->name = name;
     temp->number = number;
     return temp;
+}
+
+void contact_print(contact_t *contact)
+{
+    printf("Name: %s\nNumber: %s\n", contact->name, contact->number);
 }
 
 typedef struct node
@@ -33,7 +41,7 @@ node_t *init_node(contact_t *contact)
 
 typedef struct LinkedList
 {
-    int length;
+    uint32_t length;
     node_t *head;
 } list_t;
 
@@ -56,17 +64,18 @@ void print_list(list_t *list)
 {
     if (list == NULL)
     {
-        printf("NULL\n");
+        printf("NULL");
         return;
     }
     node_t *temp = list->head;
     if (list->head == NULL)
     {
-        printf("Empty List\n");
+        printf("Empty List (Len == %d && Head == NULL)", list->length);
+        return;
     }
     else
     {
-        // printf("Linked List:\n\t");
+        printf("Len %d:  |  ", list->length);
     }
     while (temp != NULL)
     {
@@ -74,7 +83,7 @@ void print_list(list_t *list)
         printf("[%s ; %s] -> ", temp->data->name, temp->data->number);
         temp = temp->next;
     }
-    printf("NULL\n");
+    printf("NULL");
 }
 
 list_t *append(list_t *list, node_t *node)
@@ -96,106 +105,45 @@ list_t *append(list_t *list, node_t *node)
             tmp = tmp->next;
         }
         tmp->next = node;
-        list->head = tmp;
         list->length++;
     }
     return list;
 }
 
-typedef struct dir
+node_t *in_list(list_t *list, const char *name)
 {
-    uint32_t length;
-    list_t *table[];
-} dir_t;
-
-dir_t *init_dir(int len)
-{
-    dir_t *temp = malloc(sizeof(node_t) * len);
-    temp->length = len;
-    list_t *array[len];
-    for (int i = 0; i < len; i++)
+    node_t *tmp = list->head;
+    while (tmp != NULL)
     {
-        array[i] = init_list(NULL);
+        if (tmp->data->name == name)
+        {
+            return tmp;
+        }
+        tmp = tmp->next;
     }
-    return temp;
+    return NULL;
 }
 
-int hash(contact_t *contact)
+void push(list_t *list, node_t *node)
 {
-    int res = 0;
-    for (int i = 0; i < strlen(contact->name); i++)
-    {
-        res += contact->name[i];
-    }
-    for (int i = 0; i < strlen(contact->number); i++)
-    {
-        res += contact->number[i];
-    }
-    return res % 10;
+    node->next = list->head;
+    list->head = node;
+    list->length++;
 }
 
-void add_contact(contact_t *contact, dir_t *directory)
-{
-    int hash_val = hash(contact);
-    if (hash_val > directory->length)
-    {
-        printf("Can't add this contact because hash value is too high (%d is greater than %d).\n", hash_val, directory->length);
-    }
-    else
-    {
-        node_t *tmp = init_node(contact);
-        directory->table[hash_val] = append(directory->table[hash_val], tmp);
-    }
-}
-
-void add_contacts(contact_t *contacts[], dir_t *directory, uint16_t len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        add_contact(contacts[i], directory);
-    }
-}
-
-
-void display_dir(dir_t *directory)
-{
-    printf("Directory of length %u\n", directory->length);
-    for (int i = 0; i < directory->length; i++)
-    {
-        printf("\t=>  ");
-        print_list(directory->table[i]);
-    }
-}
-
-int main(int argc, char *argv[])
+int main()
 {
     contact_t *tom = init_contact("Tom", "06 38 18 92 31");
     contact_t *helo = init_contact("Helo", "06 99 99 99 99");
-    contact_t *per1 = init_contact("per1", "06 00 00 00 00");
-    contact_t *per2 = init_contact("per2", "06 11 11 11 11");
-    contact_t *per3 = init_contact("per3", "06 11 11 11 11");
-    contact_t *per4 = init_contact("per4", "06 11 11 11 11");
-    int num_contacts = 6;
-    contact_t *my_contacts[6] = {tom, helo, per1, per2, per3, per4};
- 
-
-    // contact_t tom = *init_contact("Tom", "06 38 18 92 31");
-    // contact_t helo = *init_contact("Helo", "06 99 99 99 99");
-    // contact_t per1 = *init_contact("per1", "06 00 00 00 00");
-    // contact_t per2 = *init_contact("per2", "06 11 11 11 11");
-    // contact_t my_contacts[4] = {tom, helo, per1, per2};
-
-    // node_t *my_node = init_node(tom);
-    // append(my_node, helo);
-    // append(my_node, per1);
-    // append(my_node, per2);
-    // list_t *my_list = init_list(my_node);
-    // print_list(my_list);
-
-    dir_t *my_dir = init_dir(10);
-    // my_dir->table[hash(&tom)] = my_list;
-    // add_contact(tom, my_dir);
-    add_contacts(my_contacts, my_dir, num_contacts);
-
-    display_dir(my_dir);
+    // contact_t *per1 = init_contact("per1", "06 00 00 00 00");
+    // contact_t *per2 = init_contact("per2", "06 11 11 11 11");
+    // contact_t *per3 = init_contact("per3", "06 11 11 11 11");
+    // contact_t *per4 = init_contact("per4", "06 11 11 11 11");
+    node_t *my_node = init_node(tom);
+    node_t *helo_n = init_node(helo);
+    list_t *my_list = init_list(NULL);
+    append(my_list, my_node);
+    append(my_list, helo_n);
+    print_list(my_list);
+    printf("\n");
 }

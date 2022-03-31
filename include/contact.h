@@ -11,6 +11,8 @@ typedef struct contact
 } contact_t;
 
 extern contact_t *init_contact(const char *name, const char *number);
+extern void contact_print(contact_t *contact);
+
 
 typedef struct node
 {
@@ -22,7 +24,7 @@ extern node_t *init_node(contact_t *contact);
 
 typedef struct LinkedList
 {
-    int length;
+    uint32_t length;
     node_t *head;
 } list_t;
 
@@ -32,14 +34,8 @@ extern void print_list(list_t *list);
 
 extern list_t *append(list_t *list, node_t *node);
 
-typedef struct dir
-{
-    uint32_t length;
-    list_t *table[];
-} dir_t;
+extern void push(list_t *list, node_t *node);
 
-extern dir_t *init_dir(int len);
-
-extern void display_dir(struct dir *directory);
+extern node_t *in_list(list_t *list, const char *name);
 
 #endif /* _CONTACT_H_ */
