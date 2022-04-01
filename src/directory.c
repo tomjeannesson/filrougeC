@@ -26,12 +26,11 @@ dir_t *resize_dir(dir_t *directory, _Float32 increase_factor, _Float32 decrease_
             while (tmp)
             {
                 dir_insert(new_dir, tmp->data->name, tmp->data->number, false);
-                dir_print(new_dir);
+                // dir_print(new_dir);
                 tmp = tmp->next;
             }
         }
         dir_free(directory);
-
     }
     else if (directory->num_elem / directory->length < 0.5)
     {
@@ -43,7 +42,7 @@ dir_t *resize_dir(dir_t *directory, _Float32 increase_factor, _Float32 decrease_
             while (tmp)
             {
                 dir_insert(new_dir, tmp->data->name, tmp->data->number, false);
-                dir_print(new_dir);
+                // dir_print(new_dir);
                 tmp = tmp->next;
             }
         }
@@ -83,14 +82,24 @@ char *dir_insert(dir_t *directory, const char *name, const char *num, bool resiz
         dir_t *resized_dir = resize_dir(directory, 2, 0.5);
         if (resized_dir != NULL)
         {
+            // for (uint32_t i = 0; i < directory->length; i++)
+            // {
+            //     // directory->table[i]->length = 0;
+            //     directory->table[i]->length = resized_dir->table[i]->length;
+            //     *directory->table[i]->head = *resized_dir->table[i]->head;
+            //     // directory->table[i]->head = NULL;
+            // }
             directory->length = resized_dir->length;
             directory->num_elem = resized_dir->num_elem;
             *directory->table = *resized_dir->table;
+            dir_print(resized_dir);
+            printf("%p\n", &*resized_dir);
+            dir_print(directory);
+            printf("%p\n", &*directory);
+            fflush(stdout);
             free(resized_dir);
         }
-        dir_print(directory);
         printf("END OF RESIZING\n");
-
     }
     uint32_t hash_val = hash(name) % directory->length;
     // print_list(directory->table[hash_val]);
