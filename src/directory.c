@@ -3,60 +3,27 @@
 #include <stdbool.h>
 
 #include <directory.h>
+#include <linkedlist.h>
 #include <contact.h>
 #include <hash.h>
 
-typedef struct dir
-{
-    uint32_t length;
-    uint32_t num_elem;
-    list_t *table[];
-} dir_t;
+/*
+  Un dir est une structure de données représentant un annuaire, composé de:
+  - une longueur (int)
+  - un nombre de contacts (int)
+  - un tableau de longueur listes chainées contenant les contacts
+  Il est défini dans directory.h
+*/
+struct dir;
 
-dir_t *resize_dir(dir_t *directory, _Float32 increase_factor, _Float32 decrease_factor)
-{
-    dir_t *new_dir = NULL;
-    if (directory->num_elem / directory->length > 1.5)
-    {
-        uint32_t new_size = directory->length * increase_factor;
-        new_dir = dir_create(new_size);
-        for (uint32_t i = 0; i < directory->length; i++)
-        {
-            node_t *tmp = directory->table[i]->head;
-            while (tmp)
-            {
-                dir_insert(new_dir, tmp->data->name, tmp->data->number, false);
-                // dir_print(new_dir);
-                tmp = tmp->next;
-            }
-        }
-        dir_free(directory);
-    }
-    else if (directory->num_elem / directory->length < 0.5)
-    {
-        uint32_t new_size = directory->length * decrease_factor;
-        new_dir = dir_create(new_size);
-        for (uint32_t i = 0; i < directory->length; i++)
-        {
-            node_t *tmp = directory->table[i]->head;
-            while (tmp)
-            {
-                dir_insert(new_dir, tmp->data->name, tmp->data->number, false);
-                // dir_print(new_dir);
-                tmp = tmp->next;
-            }
-        }
-        dir_free(directory);
-    }
-    return new_dir;
-}
+bool resize = true;
 
 /*
   Crée un nouvel annuaire contenant _len_ listes vides.
 */
 dir_t *dir_create(uint32_t len)
 {
-    dir_t *temp = malloc(sizeof(list_t) * len);
+    dir_t *temp = malloc(sizeof(list_t) * len + 2 * sizeof(uint32_t));
     temp->length = len;
     temp->num_elem = 0;
     for (uint32_t i = 0; i < len; i++)
@@ -66,58 +33,106 @@ dir_t *dir_create(uint32_t len)
     return temp;
 }
 
+dir_t *resize_dir(dir_t *directory, _Float32 increase_factor, _Float32 decrease_factor)
+{
+    dir_t *new_dir = NULL;
+    uint32_t start = directory->length;
+    uint32_t new_size = 0;
+    if ((float)directory->num_elem / directory->length >= 0.75)
+    {
+        new_size = directory->length * increase_factor;
+        new_dir = dir_create(new_size);
+        for (uint32_t i = 0; i < directory->length; i++)
+        {
+            node_t *tmp = directory->table[i]->head;
+            while (tmp)
+            {
+                dir_insert(new_dir, tmp->data->name, tmp->data->number);
+                tmp = tmp->next;
+            }
+            free(tmp);
+        }
+    }
+    else if ((float)directory->num_elem / directory->length <= 0.15)
+    {
+        new_size = directory->length * decrease_factor;
+        if (new_size < 10)
+        {
+            if (directory->length >= 10)
+            {
+                new_size = 10;
+            }
+            else
+            {
+                new_size = directory->length;
+            }
+        }
+        new_dir = dir_create(new_size);
+        for (uint32_t i = 0; i < directory->length; i++)
+        {
+            node_t *tmp = directory->table[i]->head;
+            while (tmp)
+            {
+                dir_insert(new_dir, tmp->data->name, tmp->data->number);
+                tmp = tmp->next;
+            }
+            free(tmp);
+        }
+    }
+    if (start != new_size && new_size != 0)
+    {
+        printf("###   Resizing from len %d to len %d.   ###\n", start, new_size);
+    }
+    return new_dir;
+}
+
+/*
+  Applique le redimensionnement _resize_dir_ à un _dir.
+*/
+void apply_resize(dir_t *directory)
+{
+    if (resize)
+    {
+        resize = false;
+        dir_t *resized_dir = resize_dir(directory, 2, 0.5);
+        resize = true;
+        if (resized_dir != NULL)
+        {
+            directory->length = resized_dir->length;
+            directory->num_elem = resized_dir->num_elem;
+            for (uint32_t i = 0; i < directory->length; i++)
+            {
+                directory->table[i] = resized_dir->table[i];
+            }
+        }
+        free(resized_dir);
+    }
+}
+
 /*
   Insère un nouveau contact dans l'annuaire _dir_, construit à partir des nom et
   numéro passés en paramètre. Si il existait déjà un contact du même nom, son
   numéro est remplacé et la fonction retourne une copie de l'ancien numéro.
   Sinon, la fonction retourne NULL.
 */
-char *dir_insert(dir_t *directory, const char *name, const char *num, bool resize)
+char *dir_insert(dir_t *directory, const char *name, const char *num)
 {
     contact_t *contact = init_contact(name, num);
     node_t *contact_node = init_node(contact);
-    if (resize)
-    {
-        printf("RESIZING\n");
-        dir_t *resized_dir = resize_dir(directory, 2, 0.5);
-        if (resized_dir != NULL)
-        {
-            // for (uint32_t i = 0; i < directory->length; i++)
-            // {
-            //     // directory->table[i]->length = 0;
-            //     directory->table[i]->length = resized_dir->table[i]->length;
-            //     *directory->table[i]->head = *resized_dir->table[i]->head;
-            //     // directory->table[i]->head = NULL;
-            // }
-            directory->length = resized_dir->length;
-            directory->num_elem = resized_dir->num_elem;
-            *directory->table = *resized_dir->table;
-            dir_print(resized_dir);
-            printf("%p\n", &*resized_dir);
-            dir_print(directory);
-            printf("%p\n", &*directory);
-            fflush(stdout);
-            free(resized_dir);
-        }
-        printf("END OF RESIZING\n");
-    }
     uint32_t hash_val = hash(name) % directory->length;
-    // print_list(directory->table[hash_val]);
-    printf("%s => hash %d\n", name, hash_val);
+
     node_t *tmp = in_list(directory->table[hash_val], name);
     if (tmp != NULL)
     {
         const char *store_num = tmp->data->number;
         tmp->data = contact;
+        free(tmp);
         return (char *)store_num;
     }
-    if (contact_node->next)
-    {
-        printf("%s", contact_node->next->data->name);
-    }
-    append(directory->table[hash_val], contact_node);
+    push(directory->table[hash_val], contact_node);
     directory->num_elem++;
-
+    apply_resize(directory);
+    free(tmp);
     return NULL;
 }
 
@@ -142,7 +157,7 @@ const char *dir_lookup_num(dir_t *directory, const char *name)
 */
 void dir_delete(dir_t *directory, const char *name)
 {
-    if (dir_lookup_num(directory, name) != NULL)
+    if (dir_lookup_num(directory, name))
     {
         uint32_t hash_val = hash(name) % directory->length;
         if (directory->table[hash_val]->length == 0)
@@ -155,7 +170,9 @@ void dir_delete(dir_t *directory, const char *name)
             {
                 directory->table[hash_val]->head = NULL;
                 directory->table[hash_val]->length = 0;
+                directory->num_elem--;
             }
+            apply_resize(directory);
             return;
         }
         node_t *prev = directory->table[hash_val]->head;
@@ -164,6 +181,8 @@ void dir_delete(dir_t *directory, const char *name)
         {
             directory->table[hash_val]->head = current;
             directory->table[hash_val]->length--;
+            directory->num_elem--;
+            apply_resize(directory);
             return;
         }
         for (uint32_t i = 0; i < directory->table[hash_val]->length; i++)
@@ -172,7 +191,9 @@ void dir_delete(dir_t *directory, const char *name)
             {
                 prev->next = current->next;
                 directory->table[hash_val]->length--;
+                directory->num_elem--;
                 free(current);
+                apply_resize(directory);
                 return;
             }
             prev = current;
@@ -186,7 +207,11 @@ void dir_delete(dir_t *directory, const char *name)
 */
 void dir_free(struct dir *dir)
 {
-    free(dir);
+    for (uint32_t i = 0; i < dir->length; i++)
+    { 
+        free(dir->table[i]->head); // On free change liste chainéé
+    }
+    free(dir); // On free le dir
 }
 
 /*
@@ -194,13 +219,13 @@ void dir_free(struct dir *dir)
 */
 void dir_print(dir_t *dir)
 {
-    printf("Directory of length %u containing %d elements:\n", dir->length, dir->num_elem);
+    printf("Directory of length %u containing %u elements:\n", dir->length, dir->num_elem);
     uint32_t count = 0;
     for (uint32_t i = 0; i < dir->length; i++)
     {
         if (dir->table[i]->head != NULL)
         {
-            count = 0;
+            count = 0; // Compte le nombre de listes vides depuis la dernière liste pleine
             printf("\t%d\t", i);
             print_list(dir->table[i]);
             printf("\n");
@@ -208,9 +233,9 @@ void dir_print(dir_t *dir)
         else
         {
             count++;
-            if ((i < dir->length - 1 && dir->table[i + 1]->head != NULL) || i == dir->length - 1)
+            if ((i < dir->length - 1 && dir->table[i + 1]->head != NULL) || i == dir->length - 1) 
             {
-                printf("     ( ... )\t(%dx) ", count);
+                printf("     ( ... )\t\t|  (%dx) ", count); // On print toutes les listes vides ensemble
                 print_list(dir->table[i]);
                 printf("\n");
             }

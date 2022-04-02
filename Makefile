@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra -g -O2 -Iinclude/ -fPIC
 
 all: lib/libdirectory.so build-tests
 
-lib/libdirectory.so: obj/directory.o obj/contact.o obj/hash.o
+lib/libdirectory.so: obj/directory.o obj/contact.o obj/hash.o obj/linkedlist.o
 	$(CC) -shared $^ -o $@
 
 obj/%.o: src/%.c
