@@ -11,6 +11,10 @@
 /*
   Structure de données représentant un annuaire.
   Son contenu est détaillé dans directory.c.
+    Attributs:
+      uint32_t length (le nombre de lignes dans le dir)
+      uint32_t num_elem (le nombre de contacts dans le dir)
+      list_t *table[] (in tableau de longueur listes chainées)
 */
 typedef struct dir
 {
@@ -27,6 +31,8 @@ extern struct dir *dir_create(uint32_t len);
 /*
   Si nécessaire, redimensionne un _dir_, selon un facteur d'agrandissement 
   _increase_factor_ ou un facteur de rétrécissement _decrease_factor_.
+  Retourne un nouveau dir redimentionné.
+
 */
 extern struct dir *resize_dir(dir_t *directory, _Float32 increase_factor, _Float32 decrease_factor);
 
